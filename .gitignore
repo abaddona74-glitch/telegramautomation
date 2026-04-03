@@ -6,3 +6,4 @@ runtime/
 .vscode/
 secrets/
 my_agent_session.session
+my_agent_session.session-journal

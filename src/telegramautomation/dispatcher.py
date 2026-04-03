@@ -174,6 +174,9 @@ class Dispatcher:
                 "state": ContactState.FAILED.value,
                 "last_error": reason,
                 "attempts": attempts if attempts is not None else contact.attempts + 1,
+            },
+        )
+
     def _delay_contact(self, contact: ContactRow, interval_hours: int) -> None:
         next_time = datetime.now(timezone.utc) + timedelta(hours=interval_hours)
         self._sheets.update_status(
