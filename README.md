@@ -1,157 +1,97 @@
-# Telegram Automation Agent
+﻿# Telegram Agent (Userbot) - Google Sheets Avtomatlashtirish
 
-Google Sheets bilan integratsiyalangan Telegram yuborish agenti.
+Bu loyiha Google Sheets yordamida Telegram orqali xabarlarni avtomatik tarzda (spam bloklarsiz, kunlik limitni inobatga olgan holda) tarqatuvchi **Userbot (Telethon)** hisoblanadi. Tizim sizning asl profilingiz yoki ochilgan maxsus agent profil nomidan ishlaydi, shuning uchun foydalanuvchilar akkauntga birinchi bo'lib yozishi (/start bosishi) shart emas.
 
-## Nima qiladi
+##  Imkoniyatlari
 
-- `contacts` sheet dan username/phone/chat_id bo'yicha kontaktlarni oladi.
-- `templates` sheet dan matn/file shablonlarini oladi.
-- Sozlanadigan limit (`batch_size`, `interval_hours`) bilan yuboradi.
-- Limitdan oshganlarni keyingi oynaga (`delayed`) o'tkazadi.
-- Yuborish statusini Sheets ga qayta yozadi (`state`, `sent_at`, `last_error`, `message_id`, `attempts`).
+- Muvaffaqiyatli jo'natilgan xabarlarni yozib borish (state.db orqali)  kompyuter/dastur qotib qolsa yoki o'chirib yoqilsa ham **kunlik limit buzilmaydi**.
+- **Rate Limit & Delay:** Kunlik atch_size (jo'natishlar soni) to'lgach, qolgan foydalanuvchilarni avtomatik ravishda keyingi kunga (delayed) o'tkazib qo'yadi.
+- Jo'natish vaqtini Google Sheets da Kalendar orqali qulay belgilash.
+- Matnlar, Rasmlar va Fayllarni Markdown yoki HTML formatida yuborish.
+- Raqam, username yoki chat_id orqali yuborishni to'liq qo'llab-quvvatlaydi.
 
-## Muhim Telegram cheklovi
+---
 
-Bot username ga yozishi uchun user avval botni `start` qilgan bo'lishi kerak.
-Phone orqali to'g'ridan-to'g'ri yuborish bot API da kafolatlanmagan; `chat_id` ustuni mavjud bo'lsa yuborish aniq ishlaydi.
+##  O'rnatish (Installation)
 
-## O'rnatish
+### 1-Qadam: Dasturni o'rnatish va muhitni tayyorlash
+Terminal (CMD/PowerShell) ni ochamiz va quyidagi komandalarni ketma-ket bajaramiz:
 
-1. Virtual environment yarating.
-2. Dependency o'rnating:
+`powershell
+# 1. Virtual muhit (venv) yaratish:
+python -m venv .venv
 
-```bash
+# 2. Virtual muhitni faollashtirish (Windows uchun):
+.venv\Scripts\activate
+
+# 3. Kerakli modullarni o'rnatish:
 pip install -r requirements.txt
-```
+`
 
-3. `.env.example` ni `.env` ga ko'chirib to'ldiring.
+---
 
-## Google Sheets ni avtomat tayyorlash
+### 2-Qadam: .env Faylini Sozlash (Konfiguratsiya)
+Loyiha asosiy jildida (ochgan papkangizda) .env faylini yarating va uni quyidagi ma'lumotlar bilan to'ldiring:
 
-Google tomonda to'liq nol-konfiguratsiya imkoni yo'q: kamida 1 marta service account JSON kalit kerak bo'ladi.
-Lekin undan keyin jadval yaratish, tab va ustunlarni tayyorlashni bitta komandaga avtomatlashtirdik.
+`env
+# -- TELEGRAM AGENT SOZLAMALARI --
+# 1. my.telegram.org saytiga kirib "API development tools" dan quyidagi ma'lumotlarni olasiz:
+TELEGRAM_API_ID=12345678
+TELEGRAM_API_HASH=abcdef1234567890abcdef1234567890
+# Session uchun ixtiyoriy nom (shu nomda .session fayli hosil bo'ladi)
+TELEGRAM_SESSION_NAME=my_agent_session
 
-Mavjud sheet URL bilan:
+# -- GOOGLE SHEETS SOZLAMALARI --
+# 2. Google Cloud dagi Service Account JSON kalitining fayli manzili
+GOOGLE_SERVICE_ACCOUNT_FILE=secrets/mysupporttbot-57b27007f0c3.json
+# 3. Google Sheet faylingizning ochiq Manzili (URL linki) yoki fayl ID'si
+GOOGLE_SHEET_URL=https://docs.google.com/spreadsheets/d/.../edit
 
-```bash
-python -m telegramautomation.bootstrap \
-	--service-account-file C:/keys/service-account.json \
-	--sheet-url "https://docs.google.com/spreadsheets/d/xxxx/edit" \
-	--update-env
-```
+# Google Sheet varaqlarining nomlanishi (ixtiyoriy, agar aynan shunday deyilgan bo'lsa tegmang)
+CONTACTS_SHEET=contacts
+TEMPLATES_SHEET=templates
+SETTINGS_SHEET=settings
 
-Yangi sheet yaratib avtomat sozlash:
+# -- TIZIM SOZLAMALARI --
+TIMEZONE=Asia/Tashkent
+SQLITE_PATH=runtime/state.db
+POLL_INTERVAL_SECONDS=10
+LOG_LEVEL=INFO
 
-```bash
-python -m telegramautomation.bootstrap \
-	--service-account-file C:/keys/service-account.json \
-	--create-sheet \
-	--sheet-title "Telegram Automation" \
-	--update-env
-```
+# Uskunani osonlikcha o'zgartirishlar:
+ENABLE_AUTO_GRID_FORMAT=true
+AUTO_GRID_CHECK_EVERY_CYCLES=6
+ENABLE_CONTACTS_COMPACT=true
+`
 
-Eslatma:
+** Muhim:** Google Service Account (.json) dan oldingizdagi client_email ni o'zingizning brauzeringizdagi **Google Sheet** faylingizga (shaxsiy emailingiz kabi) **"Muharrir" (Editor)** sifatida qoshish esingizdan chiqmasin!
 
-- Service account email'ini Google Sheet'ga `Editor` qilib ulash shart.
-- Runtime `GOOGLE_SHEET_ID` yoki `GOOGLE_SHEET_URL` dan ishlay oladi.
+---
 
-## Sheet struktura
+### 3-Qadam: Tizimga kirish (Birinchi marta avtorizatsiya)
+Tizim aynan sizning yoki agentning profili (Userbot API) orqali yozishi uchun, dasturni asosiy yurgizishdan avval "Session" kalitini olish kerak.
 
-### contacts
+Terminalda ushbu komandani tering:
+`powershell
+python -m telegramautomation.auth
+`
+- Dastur raqamingizni so'raydi, kiritasiz (masalan qolbola, +998901234567).
+- Telegram ilovasiga kod keladi, shuni qaytarib yozasiz.
+- Muvaffaqiyatli kirilsa, jildingizda my_agent_session.session (Siz .env da yozgan nom bilan) maxfiy fayl paydo bo'ladi. Dastur mana shu orqali profilni tanib ishlashda davom etadi. Xavfsizlik qoidalariga rioya qilib bu faylni hech kimga bermagin!
 
-Kerakli ustunlar:
+---
 
-- `row_id`
-- `username`
-- `phone`
-- `chat_id`
-- `template_id`
-- `payload_type` (`text`, `file`, `text_file`)
-- `payload_ref`
-- `send_after` (ISO datetime, ixtiyoriy)
-- `priority` (int)
-- `enabled` (`true`/`false`)
-- `state` (`pending`, `retry`, `delayed`, `sent`, `failed`)
-- `attempts` (int)
-- `last_error`
-- `sent_at`
-- `message_id`
+### 4-Qadam: Dasturni Ishga Tushirish
+Muhit tayyor. Hamma sozlamalar bitdi! Endi agentni to'liq quvvat bilan ishga solamiz:
 
-### templates
-
-- `template_id`
-- `text`
-- `file_ref`
-- `parse_mode`
-- `active`
-
-### settings
-
-- `key`
-- `value`
-
-Qo'llab-quvvatlanadigan keylar:
-
-- `batch_size`
-- `interval_hours`
-- `min_delay_seconds`
-- `max_retries`
-
-## Ishga tushirish
-
-```bash
+`powershell
 python -m telegramautomation
-```
+`
 
-Agent `POLL_INTERVAL_SECONDS` oralig'ida ishlaydi va har safar navbatdagi jo'natmalarni qayta hisoblaydi.
+**Dastur qanday ishlaydi?**
+1. **Google Sheets** varag'iga qarab turadi.
+2. contacts varag'idagi navbatdagi qatorlarni yuklaydi, jo'natilishi kerak bo'lganlarga SMS tashlaydi.
+3. Kunning kvotasi qancha (atch_size=50) va xabarlar orasida vaqt qancha pauza qilinishi (min_delay_seconds=60) Google Sheet dagi settings varag'ida belgilanadi.
+4. Vaqti tugagan va limit ro'yxatni ertangi sanaga surib (delayed status bn) uzida belgilab o'tib ketadi. Limit ertasi kungi kalendar kuniga o'tganda yana avtomatik ochilib beriladi.
 
-## Telegramdan boshqarish
-
-Tizim Telegram buyruqlari orqali `settings` sheetni tahrir qila oladi.
-
-Muhim: commandlar SQL'ni emas, Google Sheet `settings` ni yangilaydi.
-`runtime/state.db` esa faqat yuborish eventlari va limit oynasi hisoblari uchun ishlatiladi.
-
-`env`:
-
-- `ENABLE_TELEGRAM_CONTROL=true`
-- `ADMIN_CHAT_IDS=123456789` (vergul bilan bir nechta id berish mumkin)
-
-Buyruqlar:
-
-- `/settings`
-- `/set <key> <value>` (`batch_size`, `interval_hours`, `min_delay_seconds`, `max_retries`)
-- `/setbatch <n>`
-- `/setinterval <hours>`
-- `/setdelay <seconds>`
-- `/setretries <n>`
-- `/runonce`
-
-`max_retries` ma'nosi: yuborish xato bo'lsa, shu qiymatgacha qayta urinadi. Limitdan oshsa `failed` bo'ladi.
-
-## Qo'shimcha qulayliklar
-
-- `row_id` bo'sh bo'lsa, agent uni avtomatik yaratib `contacts` sheetga yozadi.
-- `username` yoki `phone` (yoki `chat_id`) kiritilgan yangi qatorlarda quyidagilar avtomatik default bo'ladi:
-	- `row_id=auto_...`
-	- `payload_type=text`
-	- `priority=100`
-	- `enabled=true`
-	- `state=pending`
-	- `attempts=0`
-- Sheet ko'rinishini setka va header style bilan avtomat formatlash mumkin:
-
-```bash
-python scripts/format_sheet_grid.py
-```
-
-- Doimiy kuzatuv rejimi ham bor: servis har cycle'da yangi rowlarni tekshiradi va borderni avtomat yangilaydi.
-- `last_error` ustuni avtomatik qizil rangda formatlanadi.
-- `enabled` ustuni: `true` bo'lsa yashil, `false` bo'lsa qizil ko'rinishda bo'ladi.
-- `template_id` ustunida optionlar `templates` sheetdagi `template_id` qiymatlaridan dropdown bo'lib chiqadi.
-- `ENABLE_CONTACTS_COMPACT=true` bo'lsa username/phone/chat_id bo'sh qolgan ortiqcha qatorlar avtomatik o'chiriladi va jadval zichlanadi.
-
-`env`:
-
-- `ENABLE_AUTO_GRID_FORMAT=true`
-- `AUTO_GRID_CHECK_EVERY_CYCLES=1` (har cycle; 2 bo'lsa har ikkinchi cycle)
+Dasturni to'xtatish uchun terminalda Ctrl+C ni bosing.
