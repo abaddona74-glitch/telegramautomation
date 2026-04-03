@@ -256,6 +256,13 @@ class SheetGridFormatter:
         for row_offset, row in enumerate(values, start=2):
             for col_offset in range(col_count):
                 value = row[col_offset].strip().lower() if len(row) > col_offset else ""
+                
+                # Check for Russian translated booleans
+                if value == "истина":
+                    value = "true"
+                elif value == "ложь":
+                    value = "false"
+
                 if value not in {"true", "false"}:
                     continue
 
