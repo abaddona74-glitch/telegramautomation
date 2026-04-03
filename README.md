@@ -1,53 +1,50 @@
-﻿# Telegram Agent (Userbot) - Google Sheets Avtomatlashtirish
+# Telegram Agent (Userbot) — Google Sheets Avtomatlashtirish
 
-Bu loyiha Google Sheets yordamida Telegram orqali xabarlarni avtomatik tarzda (spam bloklarsiz, kunlik limitni inobatga olgan holda) tarqatuvchi **Userbot (Telethon)** hisoblanadi. Tizim sizning asl profilingiz yoki ochilgan maxsus agent profil nomidan ishlaydi, shuning uchun foydalanuvchilar akkauntga birinchi bo'lib yozishi (/start bosishi) shart emas.
+Bu loyiha **Telethon Userbot** asosida ishlaydi va Google Sheets orqali Telegram xabarlarini avtomatik yuboradi. Tizim kunlik limitlarni saqlaydi, kechiktirish (delay) qoidalariga amal qiladi va to‘xtab qolgan holatda ham davomiylikni buzmaydi.
 
-##  Imkoniyatlari
+## Imkoniyatlar
 
-- Muvaffaqiyatli jo'natilgan xabarlarni yozib borish (state.db orqali)  kompyuter/dastur qotib qolsa yoki o'chirib yoqilsa ham **kunlik limit buzilmaydi**.
-- **Rate Limit & Delay:** Kunlik atch_size (jo'natishlar soni) to'lgach, qolgan foydalanuvchilarni avtomatik ravishda keyingi kunga (delayed) o'tkazib qo'yadi.
-- Jo'natish vaqtini Google Sheets da Kalendar orqali qulay belgilash.
-- Matnlar, Rasmlar va Fayllarni Markdown yoki HTML formatida yuborish.
-- Raqam, username yoki chat_id orqali yuborishni to'liq qo'llab-quvvatlaydi.
+- Jo‘natilgan xabarlar holatini `state.db` da saqlash
+- Kunlik limit (`batch_size`) to‘lganda avtomatik keyingi kunga surish (`delayed`)
+- Google Sheets orqali yuborish vaqtini qulay boshqarish
+- Matn, rasm va fayllarni yuborish (Markdown/HTML)
+- Qabul qiluvchini `raqam`, `username` yoki `chat_id` orqali aniqlash
 
 ---
 
-##  O'rnatish (Installation)
+## O‘rnatish (Installation)
 
-### 1-Qadam: Dasturni o'rnatish va muhitni tayyorlash
-Terminal (CMD/PowerShell) ni ochamiz va quyidagi komandalarni ketma-ket bajaramiz:
+### 1) Virtual muhit va kutubxonalar
 
-`powershell
-# 1. Virtual muhit (venv) yaratish:
+```powershell
+# 1. Virtual muhit yaratish
 python -m venv .venv
 
-# 2. Virtual muhitni faollashtirish (Windows uchun):
+# 2. Virtual muhitni faollashtirish (Windows)
 .venv\Scripts\activate
 
-# 3. Kerakli modullarni o'rnatish:
+# 3. Kerakli paketlarni o‘rnatish
 pip install -r requirements.txt
-`
+```
 
 ---
 
-### 2-Qadam: .env Faylini Sozlash (Konfiguratsiya)
-Loyiha asosiy jildida (ochgan papkangizda) .env faylini yarating va uni quyidagi ma'lumotlar bilan to'ldiring:
+### 2) `.env` faylni sozlash
 
-`env
+Loyiha ildizida `.env` fayl yarating va quyidagini kiriting:
+
+```env
 # -- TELEGRAM AGENT SOZLAMALARI --
-# 1. my.telegram.org saytiga kirib "API development tools" dan quyidagi ma'lumotlarni olasiz:
+# my.telegram.org -> API development tools
 TELEGRAM_API_ID=12345678
 TELEGRAM_API_HASH=abcdef1234567890abcdef1234567890
-# Session uchun ixtiyoriy nom (shu nomda .session fayli hosil bo'ladi)
 TELEGRAM_SESSION_NAME=my_agent_session
 
 # -- GOOGLE SHEETS SOZLAMALARI --
-# 2. Google Cloud dagi Service Account JSON kalitining fayli manzili
 GOOGLE_SERVICE_ACCOUNT_FILE=secrets/mysupporttbot-57b27007f0c3.json
-# 3. Google Sheet faylingizning ochiq Manzili (URL linki) yoki fayl ID'si
 GOOGLE_SHEET_URL=https://docs.google.com/spreadsheets/d/.../edit
 
-# Google Sheet varaqlarining nomlanishi (ixtiyoriy, agar aynan shunday deyilgan bo'lsa tegmang)
+# Varaq nomlari
 CONTACTS_SHEET=contacts
 TEMPLATES_SHEET=templates
 SETTINGS_SHEET=settings
@@ -58,40 +55,46 @@ SQLITE_PATH=runtime/state.db
 POLL_INTERVAL_SECONDS=10
 LOG_LEVEL=INFO
 
-# Uskunani osonlikcha o'zgartirishlar:
+# Qo‘shimcha sozlamalar
 ENABLE_AUTO_GRID_FORMAT=true
 AUTO_GRID_CHECK_EVERY_CYCLES=6
 ENABLE_CONTACTS_COMPACT=true
-`
+```
 
-** Muhim:** Google Service Account (.json) dan oldingizdagi client_email ni o'zingizning brauzeringizdagi **Google Sheet** faylingizga (shaxsiy emailingiz kabi) **"Muharrir" (Editor)** sifatida qoshish esingizdan chiqmasin!
+> **Muhim:** Service Account JSON ichidagi `client_email` ni Google Sheet’ga **Editor** huquqi bilan qo‘shing.
 
 ---
 
-### 3-Qadam: Tizimga kirish (Birinchi marta avtorizatsiya)
-Tizim aynan sizning yoki agentning profili (Userbot API) orqali yozishi uchun, dasturni asosiy yurgizishdan avval "Session" kalitini olish kerak.
+### 3) Birinchi marta avtorizatsiya (session yaratish)
 
-Terminalda ushbu komandani tering:
-`powershell
+```powershell
 python -m telegramautomation.auth
-`
-- Dastur raqamingizni so'raydi, kiritasiz (masalan qolbola, +998901234567).
-- Telegram ilovasiga kod keladi, shuni qaytarib yozasiz.
-- Muvaffaqiyatli kirilsa, jildingizda my_agent_session.session (Siz .env da yozgan nom bilan) maxfiy fayl paydo bo'ladi. Dastur mana shu orqali profilni tanib ishlashda davom etadi. Xavfsizlik qoidalariga rioya qilib bu faylni hech kimga bermagin!
+```
+
+- Telefon raqamingizni kiriting
+- Telegram’dan kelgan kodni kiriting
+- Muvaffaqiyatli bo‘lsa, `.env` dagi nom bilan `.session` fayl yaratiladi
 
 ---
 
-### 4-Qadam: Dasturni Ishga Tushirish
-Muhit tayyor. Hamma sozlamalar bitdi! Endi agentni to'liq quvvat bilan ishga solamiz:
+### 4) Dasturni ishga tushirish
 
-`powershell
+```powershell
 python -m telegramautomation
-`
+```
 
-**Dastur qanday ishlaydi?**
-1. **Google Sheets** varag'iga qarab turadi.
-2. contacts varag'idagi navbatdagi qatorlarni yuklaydi, jo'natilishi kerak bo'lganlarga SMS tashlaydi.
-3. Kunning kvotasi qancha (atch_size=50) va xabarlar orasida vaqt qancha pauza qilinishi (min_delay_seconds=60) Google Sheet dagi settings varag'ida belgilanadi.
-4. Vaqti tugagan va limit ro'yxatni ertangi sanaga surib (delayed status bn) uzida belgilab o'tib ketadi. Limit ertasi kungi kalendar kuniga o'tganda yana avtomatik ochilib beriladi.
+## Ishlash tartibi
 
-Dasturni to'xtatish uchun terminalda Ctrl+C ni bosing.
+1. Dastur Google Sheets’ni doimiy kuzatadi
+2. `contacts` varaqdagi navbatdagi yozuvlarga xabar yuboradi
+3. `settings` varaqdagi limit va delay bo‘yicha ishlaydi
+4. Limit tugasa qolgan yozuvlarni keyingi kunga o‘tkazadi
+
+Dasturdan chiqish: **Ctrl + C**
+
+---
+
+## Foydali havolalar
+
+- Telegram API: [LINK](https://my.telegram.org)
+- Google Sheets: [LINK](https://docs.google.com/spreadsheets)
