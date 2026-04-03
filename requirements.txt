@@ -1,0 +1,6 @@
+telethon==1.38.1
+google-api-python-client==2.149.0
+google-auth==2.35.0
+APScheduler==3.10.4
+python-dotenv==1.0.1
+pydantic==2.9.2

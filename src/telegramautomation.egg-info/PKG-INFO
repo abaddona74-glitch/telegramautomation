@@ -1,0 +1,90 @@
+Metadata-Version: 2.4
+Name: telegramautomation
+Version: 0.1.0
+Summary: Telegram dispatch agent with Google Sheets integration
+Requires-Python: >=3.10
+Description-Content-Type: text/markdown
+Requires-Dist: python-telegram-bot==21.6
+Requires-Dist: google-api-python-client==2.149.0
+Requires-Dist: google-auth==2.35.0
+Requires-Dist: APScheduler==3.10.4
+Requires-Dist: python-dotenv==1.0.1
+Requires-Dist: pydantic==2.9.2
+
+# Telegram Automation Agent
+
+Google Sheets bilan integratsiyalangan Telegram yuborish agenti.
+
+## Nima qiladi
+
+- `contacts` sheet dan username/phone/chat_id bo'yicha kontaktlarni oladi.
+- `templates` sheet dan matn/file shablonlarini oladi.
+- Sozlanadigan limit (`batch_size`, `interval_hours`) bilan yuboradi.
+- Limitdan oshganlarni keyingi oynaga (`delayed`) o'tkazadi.
+- Yuborish statusini Sheets ga qayta yozadi (`state`, `sent_at`, `last_error`, `message_id`, `attempts`).
+
+## Muhim Telegram cheklovi
+
+Bot username ga yozishi uchun user avval botni `start` qilgan bo'lishi kerak.
+Phone orqali to'g'ridan-to'g'ri yuborish bot API da kafolatlanmagan; `chat_id` ustuni mavjud bo'lsa yuborish aniq ishlaydi.
+
+## O'rnatish
+
+1. Virtual environment yarating.
+2. Dependency o'rnating:
+
+```bash
+pip install -r requirements.txt
+```
+
+3. `.env.example` ni `.env` ga ko'chirib to'ldiring.
+
+## Sheet struktura
+
+### contacts
+
+Kerakli ustunlar:
+
+- `row_id`
+- `username`
+- `phone`
+- `chat_id`
+- `template_id`
+- `payload_type` (`text`, `file`, `text_file`)
+- `payload_ref`
+- `send_after` (ISO datetime, ixtiyoriy)
+- `priority` (int)
+- `enabled` (`true`/`false`)
+- `state` (`pending`, `retry`, `delayed`, `sent`, `failed`)
+- `attempts` (int)
+- `last_error`
+- `sent_at`
+- `message_id`
+
+### templates
+
+- `template_id`
+- `text`
+- `file_ref`
+- `parse_mode`
+- `active`
+
+### settings
+
+- `key`
+- `value`
+
+Qo'llab-quvvatlanadigan keylar:
+
+- `batch_size`
+- `interval_hours`
+- `min_delay_seconds`
+- `max_retries`
+
+## Ishga tushirish
+
+```bash
+python -m telegramautomation
+```
+
+Agent `POLL_INTERVAL_SECONDS` oralig'ida ishlaydi va har safar navbatdagi jo'natmalarni qayta hisoblaydi.

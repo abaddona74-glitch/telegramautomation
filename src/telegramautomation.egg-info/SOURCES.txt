@@ -1,0 +1,17 @@
+README.md
+pyproject.toml
+src/telegramautomation/__init__.py
+src/telegramautomation/__main__.py
+src/telegramautomation/config.py
+src/telegramautomation/dispatcher.py
+src/telegramautomation/models.py
+src/telegramautomation/scheduler_service.py
+src/telegramautomation/sheets_client.py
+src/telegramautomation/storage.py
+src/telegramautomation/telegram_client.py
+src/telegramautomation.egg-info/PKG-INFO
+src/telegramautomation.egg-info/SOURCES.txt
+src/telegramautomation.egg-info/dependency_links.txt
+src/telegramautomation.egg-info/requires.txt
+src/telegramautomation.egg-info/top_level.txt
+tests/test_config.py
